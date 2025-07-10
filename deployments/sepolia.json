@@ -1,0 +1,12 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "contractAddress": "0x6Be5E20244cCAF9cBf47E6Af39933C5E7aC8c12c",
+  "deployer": "0xYourDeployerAddress",
+  "deploymentBlock": 7580000,
+  "deploymentTx": "0x...",
+  "timestamp": "2025-01-15T10:30:00.000Z",
+  "compiler": "0.8.24",
+  "contractName": "ConfidentialTransitAnalytics",
+  "note": "Existing deployment - referenced from README.md"
+}
