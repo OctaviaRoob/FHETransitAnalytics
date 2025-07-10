@@ -1,0 +1,30 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Run lint-staged
+npx lint-staged
+
+# Run Solidity linter
+echo "📝 Linting Solidity contracts..."
+npm run lint:sol || {
+  echo "❌ Solidity linting failed. Please fix the issues and try again."
+  exit 1
+}
+
+# Run TypeScript type check
+echo "🔍 Checking TypeScript types..."
+npm run type-check || {
+  echo "❌ TypeScript type check failed. Please fix the issues and try again."
+  exit 1
+}
+
+# Run tests
+echo "🧪 Running tests..."
+npm test || {
+  echo "⚠️  Tests failed. Please fix failing tests before committing."
+  exit 1
+}
+
+echo "✅ Pre-commit checks passed!"
