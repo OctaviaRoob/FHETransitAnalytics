@@ -1,0 +1,11 @@
+node_modules
+artifacts
+cache
+coverage
+dist
+typechain-types
+deployments
+.env
+.env.local
+.prettierrc.json
+.solhint.json
