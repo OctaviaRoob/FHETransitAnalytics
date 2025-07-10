@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confidential Transit Card Analytics</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { text-align: center; color: white; padding: 40px 0; margin-bottom: 40px; }
+        .header h1 { font-size: 2.5em; margin-bottom: 15px; text-shadow: 2px 2px 8px rgba(0,0,0,0.3); }
+        .header p { font-size: 1.2em; opacity: 0.95; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px; margin-bottom: 25px; }
+        .card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 20px; padding: 35px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); transition: transform 0.3s ease; }
+        .card:hover { transform: translateY(-5px); }
+        .card h2 { color: #1e3c72; margin-bottom: 25px; font-size: 1.5em; display: flex; align-items: center; gap: 12px; }
+        .card h2::before { content: ''; width: 5px; height: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; }
+        .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 25px; }
+        .status-item { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 15px; text-align: center; color: white; }
+        .status-item label { display: block; font-weight: 600; margin-bottom: 10px; font-size: 0.85em; text-transform: uppercase; }
+        .status-item .value { font-size: 1.8em; font-weight: 800; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 10px; color: #1e3c72; font-weight: 700; font-size: 0.95em; }
+        .form-group input { width: 100%; padding: 15px; border: 2px solid #e0e7ff; border-radius: 12px; font-size: 1.05em; transition: all 0.3s; background: #f8fafc; }
+        .form-group input:focus { outline: none; border-color: #667eea; background: white; }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 18px 35px; border: none; border-radius: 12px; font-size: 1.05em; cursor: pointer; width: 100%; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; transition: all 0.3s; }
+        .btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4); }
+        .btn:disabled { background: linear-gradient(135deg, #94a3b8 0%, #cbd5e1 100%); cursor: not-allowed; opacity: 0.6; }
+        .btn-secondary { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .btn-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .alert { padding: 15px; border-radius: 12px; margin-bottom: 20px; font-weight: 600; border-left: 5px solid; }
+        .alert-info { background-color: #dbeafe; color: #1e40af; border-left-color: #3b82f6; }
+        .alert-success { background-color: #d1fae5; color: #065f46; border-left-color: #10b981; }
+        .alert-warning { background-color: #fef3c7; color: #92400e; border-left-color: #f59e0b; }
+        .alert-danger { background-color: #fee2e2; color: #991b1b; border-left-color: #ef4444; }
+        .hidden { display: none; }
+        .wallet-info { background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; font-weight: 600; color: #92400e; }
+        .time-info { background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; font-weight: 600; color: #5b21b6; }
+        .privacy-note { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); padding: 15px; border-radius: 10px; margin-top: 15px; font-size: 0.9em; color: #065f46; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚌 Confidential Transit Card Analytics</h1>
+            <p>Privacy-Preserving Public Transportation Data Analysis</p>
+            <p style="font-size:0.9em; opacity:0.8; margin-top:10px;">Powered by Zama FHE • Sepolia Testnet</p>
+        </div>
+
+        <!-- Wallet -->
+        <div class="card">
+            <h2>💳 Wallet Connection</h2>
+            <div id="walletInfo" class="hidden wallet-info">
+                <strong>Connected:</strong> <span id="walletAddress"></span>
+            </div>
+            <button id="connectBtn" class="btn">Connect MetaMask</button>
+        </div>
+
+        <div class="grid">
+            <!-- Status -->
+            <div class="card">
+                <h2>📊 Current Period Status</h2>
+                <div id="timeInfo" class="time-info">
+                    <strong>Current Hour (UTC+3):</strong> <span id="currentHour">--</span>
+                    (<span id="currentWindow">Detecting...</span>)
+                    <br>
+                    <small><strong>Local Time:</strong> <span id="localTime">--:--:--</span></small>
+                    <br>
+                    <small><strong>Window Status:</strong> <span id="windowStatus">--</span></small>
+                </div>
+                <div class="status-grid">
+                    <div class="status-item"><label>Period #</label><div class="value" id="currentPeriod">--</div></div>
+                    <div class="status-item"><label>Status</label><div class="value" id="dataCollected">--</div></div>
+                    <div class="status-item"><label>State</label><div class="value" id="periodClosed">--</div></div>
+                    <div class="status-item"><label>Participants</label><div class="value" id="participantCount">0</div></div>
+                </div>
+                <button id="refreshBtn" class="btn btn-secondary">Refresh Status</button>
+            </div>
+
+            <!-- Initialize -->
+            <div class="card">
+                <h2>🎯 Initialize Period</h2>
+                <div id="initAlert" class="alert alert-info">
+                    Initialize a new period during <strong>odd hours (UTC+3)</strong>: 13:00, 15:00, 17:00, 19:00, 21:00, 23:00, 01:00, 03:00, etc.
+                </div>
+                <button id="initBtn" class="btn">Initialize New Period</button>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Submit -->
+            <div class="card">
+                <h2>🔒 Submit Encrypted Data</h2>
+                <div id="submitAlert" class="alert alert-info">
+                    Submit data during <strong>odd hours (UTC+3)</strong> after period initialization. Data is encrypted using FHE.
+                </div>
+                <div class="form-group">
+                    <label for="spendingInput">Spending Amount (cents)</label>
+                    <input type="number" id="spendingInput" placeholder="e.g., 500 (= $5.00)" min="0" max="100000">
+                </div>
+                <div class="form-group">
+                    <label for="ridesInput">Number of Rides</label>
+                    <input type="number" id="ridesInput" placeholder="e.g., 10" min="0" max="255">
+                </div>
+                <button id="submitBtn" class="btn">Submit Encrypted Data</button>
+                <div class="privacy-note">
+                    🔐 <strong>FHE Privacy:</strong> Your data is encrypted using Zama FHE. Individual values remain encrypted on-chain and are aggregated without decryption.
+                </div>
+            </div>
+
+            <!-- Analysis -->
+            <div class="card">
+                <h2>🔍 Perform Analysis</h2>
+                <div id="analysisAlert" class="alert alert-info">
+                    Perform analysis during <strong>even hours (UTC+3)</strong>: 14:00, 16:00, 18:00, 20:00, 22:00, 00:00, 02:00, 04:00, etc.
+                </div>
+                <button id="analysisBtn" class="btn btn-success">Execute FHE Analysis</button>
+                <div class="privacy-note" style="background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%); color: #5b21b6;">
+                    📊 <strong>Aggregate Output:</strong> Only totals and averages are published, never individual data.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script>
+        const CONTRACT_ADDRESS = "0x6Be5E20244cCAF9cBf47E6Af39933C5E7aC8c12c";
+        const EXPECTED_CHAIN_ID = 11155111;
+        const CONTRACT_ABI = [
+            "function initializePeriod() external",
+            "function submitCardData(uint32 _spending, uint8 _rides) external",
+            "function performAnalysis() external",
+            "function getCurrentPeriodInfo() external view returns (uint32, bool, bool, uint256, uint256)",
+            "function getCardDataStatus(address) external view returns (bool, uint256)",
+            "function getCurrentAdjustedHour() external view returns (uint256)",
+            "function isOddHourWindow() public view returns (bool)",
+            "function isEvenHourWindow() public view returns (bool)",
+            "function isSubmissionActive() public view returns (bool)",
+            "function isAnalysisActive() public view returns (bool)",
+            "function getPeriodHistory(uint32) external view returns (bool, uint32, uint32, uint256, uint256, uint256)",
+            "function getAverageSpending(uint32) external view returns (uint256)",
+            "function getAverageRides(uint32) external view returns (uint256)"
+        ];
+
+        let provider, signer, contract, userAddress;
+
+        document.getElementById('connectBtn').addEventListener('click', async () => {
+            try {
+                if (typeof window.ethereum === 'undefined') {
+                    alert('Please install MetaMask!');
+                    return;
+                }
+
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
+
+                const network = await provider.getNetwork();
+                if (network.chainId !== EXPECTED_CHAIN_ID) {
+                    showAlert('danger', `Wrong network! Please switch to Sepolia (chainId: ${EXPECTED_CHAIN_ID})`);
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x' + EXPECTED_CHAIN_ID.toString(16) }],
+                        });
+                        location.reload();
+                    } catch (e) {}
+                    return;
+                }
+
+                document.getElementById('walletAddress').textContent =
+                    userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+                document.getElementById('walletInfo').classList.remove('hidden');
+                document.getElementById('connectBtn').textContent = '✓ Connected';
+                document.getElementById('connectBtn').disabled = true;
+
+                contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                await loadStatus();
+                showAlert('success', 'Wallet connected successfully!');
+            } catch (error) {
+                console.error(error);
+                showAlert('danger', 'Connection failed: ' + error.message);
+            }
+        });
+
+        async function loadStatus() {
+            if (!contract) return;
+            try {
+                const info = await contract.getCurrentPeriodInfo();
+                const currentHour = await contract.getCurrentAdjustedHour();
+                const isOdd = await contract.isOddHourWindow();
+                const canSubmit = await contract.isSubmissionActive();
+                const canAnalyze = await contract.isAnalysisActive();
+
+                console.log('Status:', {
+                    period: info[0].toString(),
+                    dataCollected: info[1],
+                    periodClosed: info[2],
+                    participants: info[4].toString(),
+                    currentHour: currentHour.toString(),
+                    isOdd,
+                    canSubmit,
+                    canAnalyze
+                });
+
+                document.getElementById('currentPeriod').textContent = info[0].toString();
+                document.getElementById('dataCollected').textContent = info[1] ? 'Active' : 'Inactive';
+                document.getElementById('periodClosed').textContent = info[2] ? 'Closed' : 'Open';
+                document.getElementById('participantCount').textContent = info[4].toString();
+                document.getElementById('currentHour').textContent = currentHour.toString();
+                document.getElementById('currentWindow').textContent = isOdd ? 'Odd Hour ✅' : 'Even Hour ✅';
+
+                // Show local time
+                const now = new Date();
+                document.getElementById('localTime').textContent = now.toLocaleTimeString();
+
+                // Show window status
+                let windowStatus = '';
+                if (isOdd) {
+                    windowStatus = '🟢 Initialize Period & Submit Data Window';
+                } else {
+                    windowStatus = '🔵 Analysis Window';
+                }
+                document.getElementById('windowStatus').textContent = windowStatus;
+
+                // Enable init button only during odd hours when no active period exists
+                const canInit = isOdd && (!info[1] || info[2]);
+                document.getElementById('initBtn').disabled = !canInit;
+                document.getElementById('submitBtn').disabled = !canSubmit;
+                document.getElementById('analysisBtn').disabled = !canAnalyze;
+
+                // Update button text and alerts to show why disabled
+                const initBtn = document.getElementById('initBtn');
+                const initAlert = document.getElementById('initAlert');
+                if (!isOdd) {
+                    initBtn.title = 'Can only initialize during odd hours (UTC+3)';
+                    initAlert.className = 'alert alert-warning';
+                    initAlert.innerHTML = '⏰ <strong>Wait for odd hour!</strong> Initialize during odd hours (UTC+3): 13:00, 15:00, 17:00, 19:00, 21:00, 23:00, 01:00, 03:00, etc.';
+                } else if (info[1] && !info[2]) {
+                    initBtn.title = 'Period already active';
+                    initAlert.className = 'alert alert-info';
+                    initAlert.innerHTML = '✅ <strong>Period already active.</strong> Close current period during even hour before starting new one.';
+                } else {
+                    initBtn.title = 'Click to initialize new period';
+                    initAlert.className = 'alert alert-success';
+                    initAlert.innerHTML = '🟢 <strong>Ready!</strong> Click button to initialize a new period.';
+                }
+
+                const submitBtn = document.getElementById('submitBtn');
+                const submitAlert = document.getElementById('submitAlert');
+                if (canSubmit) {
+                    submitBtn.title = 'Click to submit encrypted data';
+                    submitAlert.className = 'alert alert-success';
+                    submitAlert.innerHTML = '🟢 <strong>Ready!</strong> Submit your encrypted transit data now.';
+                } else {
+                    submitBtn.title = 'Can only submit during submission window';
+                    submitAlert.className = 'alert alert-warning';
+                    submitAlert.innerHTML = '⏰ <strong>Not submission window.</strong> Submit during odd hours (UTC+3) after initializing period.';
+                }
+
+                const analysisBtn = document.getElementById('analysisBtn');
+                const analysisAlert = document.getElementById('analysisAlert');
+                if (canAnalyze) {
+                    analysisBtn.title = 'Click to perform analysis';
+                    analysisAlert.className = 'alert alert-success';
+                    analysisAlert.innerHTML = '🟢 <strong>Ready!</strong> Click to perform FHE aggregate analysis.';
+                } else {
+                    analysisBtn.title = 'Can only analyze during even hours (UTC+3)';
+                    analysisAlert.className = 'alert alert-warning';
+                    analysisAlert.innerHTML = '⏰ <strong>Wait for even hour!</strong> Analyze during even hours (UTC+3): 14:00, 16:00, 18:00, 20:00, 22:00, 00:00, 02:00, 04:00, etc.';
+                }
+            } catch (error) {
+                console.error('Failed to load status:', error);
+            }
+        }
+
+        document.getElementById('initBtn').addEventListener('click', async () => {
+            if (!contract) return showAlert('warning', 'Please connect wallet first!');
+            try {
+                showAlert('info', 'Initializing new period...');
+                const tx = await contract.initializePeriod();
+                await tx.wait();
+                showAlert('success', 'Period initialized successfully!');
+                await loadStatus();
+            } catch (error) {
+                console.error(error);
+                showAlert('danger', 'Initialization failed: ' + (error.reason || error.message));
+            }
+        });
+
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            if (!contract) return showAlert('warning', 'Please connect wallet first!');
+
+            const spending = parseInt(document.getElementById('spendingInput').value);
+            const rides = parseInt(document.getElementById('ridesInput').value);
+
+            if (!spending || !rides) return showAlert('warning', 'Please fill in all fields!');
+
+            try {
+                showAlert('info', 'Submitting encrypted data using FHE...');
+                const tx = await contract.submitCardData(spending, rides);
+                await tx.wait();
+                showAlert('success', 'Encrypted data submitted! Data is protected by FHE and aggregated privately.');
+                await loadStatus();
+
+                document.getElementById('spendingInput').value = '';
+                document.getElementById('ridesInput').value = '';
+            } catch (error) {
+                console.error(error);
+                showAlert('danger', 'Submission failed: ' + (error.reason || error.message));
+            }
+        });
+
+        document.getElementById('analysisBtn').addEventListener('click', async () => {
+            if (!contract) return showAlert('warning', 'Please connect wallet first!');
+
+            try {
+                showAlert('info', 'Requesting FHE decryption and performing aggregate analysis...');
+                const tx = await contract.performAnalysis();
+                await tx.wait();
+                showAlert('success', 'Analysis request submitted! Waiting for async decryption callback. Results will be available shortly.');
+                await loadStatus();
+            } catch (error) {
+                console.error(error);
+                showAlert('danger', 'Analysis failed: ' + (error.reason || error.message));
+            }
+        });
+
+        document.getElementById('refreshBtn').addEventListener('click', loadStatus);
+
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.maxWidth = '400px';
+            alertDiv.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
+            document.body.appendChild(alertDiv);
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+
+        setInterval(() => { if (contract) loadStatus(); }, 30000);
+    </script>
+</body>
+</html>
