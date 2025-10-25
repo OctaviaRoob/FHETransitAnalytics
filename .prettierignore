@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build artifacts
+artifacts/
+cache/
+typechain-types/
+frontend/.next/
+frontend/out/
+
+# Coverage
+coverage/
+coverage.json
+
+# Deployment
+deployments/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+*.log
+.DS_Store
