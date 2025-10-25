@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机密公交卡数据分析 - Confidential Transit Analytics</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { text-align: center; color: white; padding: 40px 0; margin-bottom: 40px; }
+        .header h1 { font-size: 2.5em; margin-bottom: 15px; text-shadow: 2px 2px 8px rgba(0,0,0,0.3); }
+        .header p { font-size: 1.2em; opacity: 0.95; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px; margin-bottom: 25px; }
+        .card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 20px; padding: 35px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); transition: transform 0.3s ease; }
+        .card:hover { transform: translateY(-5px); }
+        .card h2 { color: #1e3c72; margin-bottom: 25px; font-size: 1.5em; display: flex; align-items: center; gap: 12px; }
+        .card h2::before { content: ''; width: 5px; height: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; }
+        .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 25px; }
+        .status-item { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 15px; text-align: center; color: white; }
+        .status-item label { display: block; font-weight: 600; margin-bottom: 10px; font-size: 0.85em; text-transform: uppercase; }
+        .status-item .value { font-size: 1.8em; font-weight: 800; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 10px; color: #1e3c72; font-weight: 700; font-size: 0.95em; }
+        .form-group input { width: 100%; padding: 15px; border: 2px solid #e0e7ff; border-radius: 12px; font-size: 1.05em; transition: all 0.3s; background: #f8fafc; }
+        .form-group input:focus { outline: none; border-color: #667eea; background: white; }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 18px 35px; border: none; border-radius: 12px; font-size: 1.1em; cursor: pointer; width: 100%; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; }
+        .btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4); }
+        .btn:disabled { background: linear-gradient(135deg, #94a3b8 0%, #cbd5e1 100%); cursor: not-allowed; }
+        .btn-secondary { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .btn-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .alert { padding: 15px; border-radius: 12px; margin-bottom: 20px; font-weight: 600; border-left: 5px solid; }
+        .alert-info { background-color: #dbeafe; color: #1e40af; border-left-color: #3b82f6; }
+        .alert-success { background-color: #d1fae5; color: #065f46; border-left-color: #10b981; }
+        .alert-warning { background-color: #fef3c7; color: #92400e; border-left-color: #f59e0b; }
+        .alert-danger { background-color: #fee2e2; color: #991b1b; border-left-color: #ef4444; }
+        .hidden { display: none; }
+        .wallet-info { background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; font-weight: 600; color: #92400e; }
+        .time-info { background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; font-weight: 600; color: #5b21b6; }
+        .privacy-note { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); padding: 15px; border-radius: 10px; margin-top: 15px; font-size: 0.9em; color: #065f46; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚌 机密公交卡数据分析</h1>
+            <p>Confidential Public Transit Analytics using Commitment Scheme</p>
+            <p style="font-size:0.9em; opacity:0.8; margin-top:10px;">隐私保护 • 承诺方案 • Sepolia Testnet</p>
+        </div>
+
+        <!-- Wallet -->
+        <div class="card">
+            <h2>💳 钱包连接</h2>
+            <div id="walletInfo" class="hidden wallet-info">
+                <strong>已连接地址:</strong> <span id="walletAddress"></span>
+            </div>
+            <button id="connectBtn" class="btn">连接 MetaMask</button>
+        </div>
+
+        <div class="grid">
+            <!-- Status -->
+            <div class="card">
+                <h2>📊 当前周期状态</h2>
+                <div id="timeInfo" class="time-info">
+                    <strong>当前窗口:</strong> <span id="currentWindow">检测中...</span><br>
+                    <strong>当前小时:</strong> <span id="currentHour">--</span>
+                </div>
+                <div class="status-grid">
+                    <div class="status-item"><label>周期#</label><div class="value" id="currentPeriod">--</div></div>
+                    <div class="status-item"><label>数据状态</label><div class="value" id="dataCollected">--</div></div>
+                    <div class="status-item"><label>周期</label><div class="value" id="periodClosed">--</div></div>
+                    <div class="status-item"><label>参与者</label><div class="value" id="participantCount">0</div></div>
+                </div>
+                <button id="refreshBtn" class="btn btn-secondary">刷新状态</button>
+            </div>
+
+            <!-- Initialize -->
+            <div class="card">
+                <h2>🎯 初始化周期</h2>
+                <div id="initAlert" class="alert alert-info">
+                    ⏰ 只能在奇数小时初始化 (13:00, 15:00, 17:00...)
+                </div>
+                <button id="initBtn" class="btn">初始化新周期</button>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Submit -->
+            <div class="card">
+                <h2>🔒 提交加密数据</h2>
+                <div id="submitAlert" class="alert alert-info">
+                    ⏰ 只能在奇数小时提交数据（提交窗口）
+                </div>
+                <div class="form-group">
+                    <label for="spendingInput">消费金额（分）</label>
+                    <input type="number" id="spendingInput" placeholder="例如: 500 (= ¥5.00)" min="0" max="100000">
+                </div>
+                <div class="form-group">
+                    <label for="ridesInput">乘车次数</label>
+                    <input type="number" id="ridesInput" placeholder="例如: 10" min="0" max="255">
+                </div>
+                <button id="submitBtn" class="btn">提交数据承诺</button>
+                <div class="privacy-note">
+                    🔐 <strong>隐私保护:</strong> 您的数据会被转换为哈希承诺。原始数据不会暴露在链上。
+                </div>
+            </div>
+
+            <!-- Analysis -->
+            <div class="card">
+                <h2>🔍 执行分析</h2>
+                <div id="analysisAlert" class="alert alert-info">
+                    ⏰ 只能在偶数小时分析 (14:00, 16:00, 18:00...)
+                </div>
+                <button id="revealBtn" class="btn btn-success">1. 揭示我的数据</button>
+                <button id="analysisBtn" class="btn btn-success">2. 执行聚合分析</button>
+                <div class="privacy-note" style="background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%); color: #5b21b6;">
+                    📊 <strong>聚合输出:</strong> 分析只会公开总计和平均值，不会公开个人数据。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script>
+        const CONTRACT_ADDRESS = "YOUR_CONTRACT_ADDRESS"; // 部署后更新
+        const EXPECTED_CHAIN_ID = 11155111; // Sepolia
+        const CONTRACT_ABI = [
+            "function initializePeriod() external",
+            "function submitCardData(bytes32 _commitment) external",
+            "function revealCardData(uint32 _spending, uint8 _rides, bytes32 _salt) external",
+            "function performAnalysis() external",
+            "function getCurrentPeriodInfo() external view returns (uint32, bool, bool, uint256, uint256)",
+            "function getCardDataStatus(address) external view returns (bool, uint256)",
+            "function getCurrentAdjustedHour() external view returns (uint256)",
+            "function isOddHourWindow() public view returns (bool)",
+            "function isEvenHourWindow() public view returns (bool)",
+            "function isSubmissionActive() public view returns (bool)",
+            "function isAnalysisActive() public view returns (bool)",
+            "function generateCommitment(uint32, uint8, bytes32) public pure returns (bytes32)"
+        ];
+
+        let provider, signer, contract, userAddress;
+        let currentData = { spending: 0, rides: 0, salt: null }; // Store for reveal phase
+
+        // Connect wallet
+        document.getElementById('connectBtn').addEventListener('click', async () => {
+            try {
+                if (typeof window.ethereum === 'undefined') {
+                    alert('请安装 MetaMask!');
+                    return;
+                }
+
+                if (CONTRACT_ADDRESS === "YOUR_CONTRACT_ADDRESS") {
+                    showAlert('warning', '合约未部署！请先部署合约并更新地址。');
+                    return;
+                }
+
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
+
+                const network = await provider.getNetwork();
+                if (network.chainId !== EXPECTED_CHAIN_ID) {
+                    showAlert('danger', `错误的网络！请切换到 Sepolia (chainId: ${EXPECTED_CHAIN_ID})`);
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x' + EXPECTED_CHAIN_ID.toString(16) }],
+                        });
+                        location.reload();
+                    } catch (e) {}
+                    return;
+                }
+
+                document.getElementById('walletAddress').textContent =
+                    userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+                document.getElementById('walletInfo').classList.remove('hidden');
+                document.getElementById('connectBtn').textContent = '✓ 已连接';
+                document.getElementById('connectBtn').disabled = true;
+
+                contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                await loadStatus();
+                showAlert('success', '钱包连接成功！');
+            } catch (error) {
+                console.error(error);
+                showAlert('danger', '连接失败: ' + error.message);
+            }
+        });
+
+        // Load status
+        async function loadStatus() {
+            if (!contract) return;
+            try {
+                const info = await contract.getCurrentPeriodInfo();
+                const currentHour = await contract.getCurrentAdjustedHour();
+                const isOdd = await contract.isOddHourWindow();
+                const isEven = await contract.isEvenHourWindow();
+                const canSubmit = await contract.isSubmissionActive();
+                const canAnalyze = await contract.isAnalysisActive();
+
+                document.getElementById('currentPeriod').textContent = info[0].toString();
+                document.getElementById('dataCollected').textContent = info[1] ? '✓ 活跃' : '✗ 未激活';
+                document.getElementById('periodClosed').textContent = info[2] ? '已关闭' : '开放';
+                document.getElementById('participantCount').textContent = info[4].toString();
+                document.getElementById('currentHour').textContent = currentHour.toString();
+
+                let windowText = '';
+                if (isOdd) windowText = '🟢 奇数小时 - 提交窗口';
+                else if (isEven) windowText = '🔵 偶数小时 - 分析窗口';
+                document.getElementById('currentWindow').textContent = windowText;
+
+                document.getElementById('initBtn').disabled = !isOdd || (info[1] && !info[2]);
+                document.getElementById('submitBtn').disabled = !canSubmit;
+                document.getElementById('revealBtn').disabled = !canAnalyze;
+                document.getElementById('analysisBtn').disabled = !canAnalyze;
+            } catch (error) {
+                console.error('加载状态失败:', error);
+            }
+        }
+
+        // Initialize period
+        document.getElementById('initBtn').addEventListener('click', async () => {
+            if (!contract) return showAlert('warning', '请先连接钱包！');
+            try {
+                showAlert('info', '正在初始化新周期...');
+                const tx = await contract.initializePeriod();
+                await tx.wait();
+                showAlert('success', '周期初始化成功！');
+                await loadStatus();
+            } catch (error) {
+                console.error(error);
+                showAlert('danger', '初始化失败: ' + (error.reason || error.message));
+            }
+        });
+
+        // Submit data (commitment)
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            if (!contract) return showAlert('warning', '请先连接钱包！');
+
+            const spending = parseInt(document.getElementById('spendingInput').value);
+            const rides = parseInt(document.getElementById('ridesInput').value);
+
+            if (!spending || !rides) return showAlert('warning', '请填写所有字段！');
+
+            try {
+                // Generate random salt
+                const salt = ethers.utils.hexlify(ethers.utils.randomBytes(32));
+
+                // Calculate commitment
+                const commitment = await contract.generateCommitment(spending, rides, salt);
+
+                // Store for reveal phase
+                currentData = { spending, rides, salt };
+                localStorage.setItem('transitData_' + userAddress, JSON.stringify(currentData));
+
+                showAlert('info', '正在提交数据承诺...');
+                const tx = await contract.submitCardData(commitment);
+                await tx.wait();
+                showAlert('success', '数据承诺提交成功！数据已加密保护。请在偶数小时揭示数据。');
+                await loadStatus();
+
+                document.getElementById('spendingInput').value = '';
+                document.getElementById('ridesInput').value = '';
+            } catch (error) {
+                console.error(error);
+                showAlert('danger', '提交失败: ' + (error.reason || error.message));
+            }
+        });
+
+        // Reveal data
+        document.getElementById('revealBtn').addEventListener('click', async () => {
+            if (!contract) return showAlert('warning', '请先连接钱包！');
+
+            try {
+                // Retrieve stored data
+                const stored = localStorage.getItem('transitData_' + userAddress);
+                if (!stored) return showAlert('warning', '未找到待揭示的数据！请确保您在提交窗口提交过数据。');
+
+                const data = JSON.parse(stored);
+
+                showAlert('info', '正在揭示数据...');
+                const tx = await contract.revealCardData(data.spending, data.rides, data.salt);
+                await tx.wait();
+                showAlert('success', '数据揭示成功！现在可以执行聚合分析了。');
+
+                // Clear stored data
+                localStorage.removeItem('transitData_' + userAddress);
+            } catch (error) {
+                console.error(error);
+                showAlert('danger', '揭示失败: ' + (error.reason || error.message));
+            }
+        });
+
+        // Perform analysis
+        document.getElementById('analysisBtn').addEventListener('click', async () => {
+            if (!contract) return showAlert('warning', '请先连接钱包！');
+
+            try {
+                showAlert('info', '正在执行聚合分析...');
+                const tx = await contract.performAnalysis();
+                await tx.wait();
+                showAlert('success', '分析完成！聚合结果已发布。');
+                await loadStatus();
+            } catch (error) {
+                console.error(error);
+                showAlert('danger', '分析失败: ' + (error.reason || error.message));
+            }
+        });
+
+        // Refresh status
+        document.getElementById('refreshBtn').addEventListener('click', loadStatus);
+
+        // Show alert
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.maxWidth = '400px';
+            alertDiv.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
+            document.body.appendChild(alertDiv);
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+
+        // Auto refresh
+        setInterval(() => { if (contract) loadStatus(); }, 30000);
+    </script>
+</body>
+</html>
