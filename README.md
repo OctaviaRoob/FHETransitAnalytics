@@ -1,5 +1,7 @@
 # 🔐 Transit Analytics Platform
 
+**FHE Contract Privacy Transit Card Data - Confidential Public Transport Analysis**
+
 **Privacy-Preserving Public Transportation Data Analysis with Fully Homomorphic Encryption**
 
 <div align="center">
@@ -19,11 +21,13 @@
 
 ## 🌐 Live Demo
 
-🚀 **Application**: [http://localhost:1391](http://localhost:1391) (Running on development server)
+🚀 **Application**: [https://fhe-transit-analytics.vercel.app/](https://fhe-transit-analytics.vercel.app/)
 
 📜 **Smart Contract**: [`0x6Be5E20244cCAF9cBf47E6Af39933C5E7aC8c12c`](https://sepolia.etherscan.io/address/0x6Be5E20244cCAF9cBf47E6Af39933C5E7aC8c12c)
 
-🎥 **Video Demo**: [Watch demonstration](#) *(Coming soon)*
+🎥 **Video Demo**: See `demo.mp4` (Download to view - video links may not work in browsers)
+
+💻 **Source Code**: [https://github.com/OctaviaRoob/FHETransitAnalytics](https://github.com/OctaviaRoob/FHETransitAnalytics)
 
 ---
 
@@ -245,8 +249,8 @@ contracts/
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/transit-analytics.git
-cd transit-analytics
+git clone https://github.com/OctaviaRoob/FHETransitAnalytics.git
+cd FHETransitAnalytics
 
 # Install dependencies
 npm install
@@ -350,12 +354,7 @@ npm install
 npm run dev
 ```
 
-Output:
-```
-▲ Next.js 14.2.33
-- Local:        http://localhost:1391
-✓ Ready in 2.3s
-```
+Open your browser to the displayed local URL.
 
 ---
 
@@ -999,9 +998,9 @@ See [LICENSE](./LICENSE) file for full details.
 
 ### Application
 
-- 🌐 **Live Demo**: [http://localhost:1391](http://localhost:1391)
+- 🌐 **Live Demo**: [https://fhe-transit-analytics.vercel.app/](https://fhe-transit-analytics.vercel.app/)
 - 📜 **Smart Contract**: [0x6Be5E20244cCAF9cBf47E6Af39933C5E7aC8c12c](https://sepolia.etherscan.io/address/0x6Be5E20244cCAF9cBf47E6Af39933C5E7aC8c12c)
-- 💻 **Source Code**: [GitHub Repository](#)
+- 💻 **Source Code**: [https://github.com/OctaviaRoob/FHETransitAnalytics](https://github.com/OctaviaRoob/FHETransitAnalytics)
 
 ### Zama Resources
 
