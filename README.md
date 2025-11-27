@@ -25,7 +25,7 @@
 
 📜 **Smart Contract**: [`0x6Be5E20244cCAF9cBf47E6Af39933C5E7aC8c12c`](https://sepolia.etherscan.io/address/0x6Be5E20244cCAF9cBf47E6Af39933C5E7aC8c12c)
 
-🎥 **Video Demo**: See `demo.mp4` (Download to view - video links may not work in browsers)
+🎥 **Video Demo**: See `demo.mp4` (Download to view) https://streamable.com/1lacw6
 
 💻 **Source Code**: [https://github.com/OctaviaRoob/FHETransitAnalytics](https://github.com/OctaviaRoob/FHETransitAnalytics)
 
